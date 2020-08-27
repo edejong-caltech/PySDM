@@ -7,12 +7,9 @@ from PySDM.physics import constants as const
 class ConstKern:
     def __init__(self, kernel_const):
         self.kernel_const = kernel_const
-        
+
     def __call__(self, output, is_first_in_pair):
-        # TODO: stop stupidly summing over all particles
-        output.sum_pair(self.core.state['volume'],is_first_in_pair)
-        output *= 0
-        output += self.kernel_const
+        output.product(is_first_in_pair, self.kernel_const)
         
     def register(self, builder):
         self.core = builder.core

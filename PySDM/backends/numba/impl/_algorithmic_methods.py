@@ -30,7 +30,7 @@ class AlgorithmicMethods:
     @staticmethod
     @numba.njit(int64(int64[:], float64[:], int64[:], int64, float64[:, :], float64[:, :], float64[:], int64[:], numba.boolean, int64, float64[:]),
                 **{**conf.JIT_FLAGS, **{'parallel': False}})
-    # TODO: waits for https://github.com/numba/numba/issues/5279
+    # TODO: reopen https://github.com/numba/numba/issues/5279 with minimal rep. ex.
     def coalescence_body(n, volume, idx, length, intensive, extensive, gamma, healthy, adaptive, subs, adaptive_memory):
         result = 1
         for i in prange(length - 1):
@@ -85,9 +85,7 @@ class AlgorithmicMethods:
               = floor(prob)     if rand >= prob - floor(prob)
         """
         for i in prange(len(prob)):
-            prob[i] *= -1.
-            prob[i] += rand[i // 2]
-            prob[i] = -np.floor(prob[i])
+            prob[i] = np.ceil(prob[i] - rand[i // 2])
 
     @staticmethod
     def compute_gamma(prob, rand):
@@ -156,7 +154,7 @@ class AlgorithmicMethods:
 
     @staticmethod
     def interpolation(output, radius, factor, b, c):
-        return AlgorithmicMethods.interpolation_body(output.data, radius.data, factor, b, c)
+        return AlgorithmicMethods.interpolation_body(output.data, radius.data, factor, b.data, c.data)
 
     @staticmethod
     def make_cell_caretaker(idx, cell_start, scheme="default"):

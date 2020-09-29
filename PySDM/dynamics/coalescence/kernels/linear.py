@@ -12,7 +12,7 @@ class Linear:
         #pair in order (R, r) to temporary memory self.tmp
         self.tmp.sort_pair(self.core.state['radius'], is_first_in_pair) #pair in order (R, r) to temporary memory self.tmp: see gravitational.py
         # f(R,r) = R+r, for R>=r
-        output.polynomial_pair(self.tmp, is_first_in_pair, coef_0=(1,), coef_1=(1,), pow_0=(1), pow_1(1))
+        output.polynomial_pair(self.tmp, is_first_in_pair, coef_0=(1,), coef_1=(1,), pow_0=(1), pow_1=(1))
 
     def register(self, builder):
         self.core = builder.core

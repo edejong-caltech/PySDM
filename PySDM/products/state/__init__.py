@@ -12,3 +12,5 @@ from .super_droplet_count import SuperDropletCount
 from .total_particle_specific_concentration import TotalParticleSpecificConcentration
 from .particles_volume_spectrum import ParticlesVolumeSpectrum
 from .particles_number_volume_spectrum import ParticlesNumberVolumeSpectrum
+from .kth_moment import KthMoment
+from .k_moments import KMoments

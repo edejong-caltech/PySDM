@@ -3,7 +3,6 @@ Created at 28.09.2020 by edejong
 """
 
 from PySDM.product import MomentProduct
-from PySDM.physics import formulae as phys
 import numpy as np
 
 
@@ -28,7 +27,7 @@ class ParticlesNumberVolumeSpectrum(MomentProduct):
     def get(self, volume_bins_edges):
         vals = np.empty(len(volume_bins_edges) - 1)
         for i in range(len(vals)):
-            self.download_moment_to_buffer(attr='volume', rank=1,
+            self.download_moment_to_buffer(attr='volume', rank=0,
                                            filter_range=(volume_bins_edges[i], volume_bins_edges[i + 1]))
             vals[i] = self.buffer[0]
         return vals

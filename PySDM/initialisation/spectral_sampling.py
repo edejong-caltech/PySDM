@@ -58,7 +58,6 @@ class ConstantMultiplicity(SpectralSampling):
             spectrum.cumulative(self.size_range[0]),
             spectrum.cumulative(self.size_range[1])
         )
-        print(self.cdf_range)
         assert 0 < self.cdf_range[0] < self.cdf_range[1]
 
         self.spectrum = spectrum

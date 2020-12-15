@@ -1,9 +1,9 @@
 """
 Created at 03.06.2019
+Modified by edejong 12.10.2020
 """
 
-from scipy.stats import lognorm
-from scipy.stats import expon
+from scipy.stats import lognorm, expon, norm, gamma
 import math
 import numpy as np
 from scipy.interpolate import interp1d
@@ -45,9 +45,31 @@ class Exponential(Spectrum):
 class Lognormal(Spectrum):
 
     def __init__(self, norm_factor: float, m_mode: float, s_geom: float):
-        super().__init__(lognorm, (math.log(s_geom), 0, m_mode), norm_factor)
+        super().__init__(lognorm, (
+            math.log(s_geom),  # geometric std dev
+            0,                 # loc
+            m_mode             # scale
+        ), norm_factor)
 
-
+class Gaussian(Spectrum):
+    
+    def __init__(self, norm_factor, loc, scale):
+        super().__init__(norm, (
+            loc,     # mean
+            scale    # std dev
+        ), norm_factor)
+        
+        
+class Gamma(Spectrum):
+    
+    def __init__(self, norm_factor, k, theta):
+        super().__init__(gamma, (
+            k,       # shape factor
+            0,       # loc
+            theta    # scale
+        ), norm_factor)
+                 
+        
 class Sum:
 
     def __init__(self, spectra: tuple, percentile=.001):

@@ -2,9 +2,9 @@
 Created at 10.12.2019
 """
 
-import ThrustRTC as trtc
-from PySDM.backends.thrustRTC.nice_thrust import nice_thrust
 from PySDM.backends.thrustRTC.conf import NICE_THRUST_FLAGS
+from PySDM.backends.thrustRTC.nice_thrust import nice_thrust
+from ..conf import trtc
 
 
 class AlgorithmicMethods:
@@ -15,18 +15,18 @@ class AlgorithmicMethods:
         dim = trtc.DVInt64(dim)
         idx_length = trtc.DVInt64(position_in_cell.shape[1])
         courant_length = trtc.DVInt64(courant.shape[0])
-        loop = trtc.For(['dim', 'idx_length', 'displacement', 'courant', 'courant_length', 'cell_origin', 'position_in_cell'], "droplet", f'''
+        loop = trtc.For(['dim', 'idx_length', 'displacement', 'courant', 'courant_length', 'cell_origin', 'position_in_cell'], "i", f'''
             // Arakawa-C grid
-            int _l_0 = cell_origin[droplet + 0];
-            int _l_1 = cell_origin[droplet + idx_length];
+            int _l_0 = cell_origin[i + 0];
+            int _l_1 = cell_origin[i + idx_length];
             int _l = _l_0 + _l_1 * courant_length;
-            int _r_0 = cell_origin[droplet + 0] + 1 * (dim == 0);
-            int _r_1 = cell_origin[droplet + idx_length] + 1 * (dim == 1);
+            int _r_0 = cell_origin[i + 0] + 1 * (dim == 0);
+            int _r_1 = cell_origin[i + idx_length] + 1 * (dim == 1);
             int _r = _r_0 + _r_1 * courant_length;
-            int omega = position_in_cell[droplet + idx_length * dim];
+            int omega = position_in_cell[i + idx_length * dim];
             int c_r = courant[_r];
             int c_l = courant[_l];
-            displacement[droplet, dim] = {scheme(None, None, None)}
+            displacement[i, dim] = {scheme(None, None, None)}
             ''')
         loop.launch_n(
             displacement.shape[1],
@@ -45,16 +45,18 @@ class AlgorithmicMethods:
             j = idx[i + 1];
             k = idx[i];
         }
-        int g = n[j] / n[k];
-        if (adaptive) 
+        int g = (int)(n[j] / n[k]);
+        if (adaptive) {
             adaptive_memory[i] = (int)(gamma[i] * subs / g);
-        if (g > gamma[i])
+        }
+        if (g > gamma[i]) {
             g = gamma[i];
-        if (g == 0)
+        }
+        if (g == 0) {
             return;
+        }
             
         int new_n = n[j] - g * n[k];
-        
         if (new_n > 0) {
             n[j] = new_n;
             
@@ -95,7 +97,7 @@ class AlgorithmicMethods:
         return trtc.Reduce(adaptive_memory.data.range(0, length-1), trtc.DVInt64(0), trtc.Maximum())
 
     __compute_gamma_body = trtc.For(['prob', 'rand'], "i", '''
-        prob[i] = -floor(-prob[i] + rand[int(i / 2)]);
+        prob[i] = ceil(prob[i] - rand[(int)(i / 2)]);
         ''')
 
     @staticmethod
@@ -113,7 +115,8 @@ class AlgorithmicMethods:
     ):
         raise NotImplementedError()
 
-    __flag_precipitated_body = trtc.For(['idx', 'idx_length', 'n_dims', 'healthy', 'cell_origin', 'position_in_cell'], "i", '''
+    __flag_precipitated_body = trtc.For(['idx', 'idx_length', 'n_dims', 'healthy', 'cell_origin', 'position_in_cell',
+                                         'volume', 'n'], "i", '''
         if (cell_origin[idx_length * (n_dims-1) + i] == 0 && position_in_cell[idx_length * (n_dims-1) + i] < 0) {
             idx[i] = idx_length;
             healthy[0] = 0;
@@ -122,11 +125,13 @@ class AlgorithmicMethods:
 
     @staticmethod
     @nice_thrust(**NICE_THRUST_FLAGS)
-    def flag_precipitated(cell_origin, position_in_cell, idx, length, healthy):
+    def flag_precipitated(cell_origin, position_in_cell, volume, n, idx, length, healthy):
         idx_length = trtc.DVInt64(len(idx))
         n_dims = trtc.DVInt64(len(cell_origin.shape))
         AlgorithmicMethods.__flag_precipitated_body.launch_n(
-            length, [idx.data, idx_length, n_dims, healthy.data, cell_origin.data, position_in_cell.data])
+            length, [idx.data, idx_length, n_dims, healthy.data, cell_origin.data, position_in_cell.data,
+                     volume.data, n.data])
+        return 0 # TODO
 
     __linear_collection_efficiency_body = trtc.For(['A', 'B', 'D1', 'D2', 'E1', 'E2', 'F1', 'F2', 'G1', 'G2', 'G3', 'Mf', 'Mg', 'output', 'radii', 'is_first_in_pair', 'unit'], "i", '''
         output[i] = 0;
@@ -184,7 +189,7 @@ class AlgorithmicMethods:
                                                          [output.data, radius.data, factor_device, b.data, c.data])
 
     @staticmethod
-    def make_cell_caretaker(idx, cell_start, scheme):
+    def make_cell_caretaker(idx, cell_start, scheme=None):
         return AlgorithmicMethods._sort_by_cell_id_and_update_cell_start
 
     @staticmethod
@@ -217,8 +222,8 @@ class AlgorithmicMethods:
         }
         ''')
 
-    __normalize_body_1 = trtc.For(['prob', 'cell_id', 'norm_factor'], "d", '''
-        prob[d] *= norm_factor[cell_id[d]];
+    __normalize_body_1 = trtc.For(['prob', 'cell_id', 'norm_factor'], "i", '''
+        prob[i] *= norm_factor[cell_id[i]];
         ''')
 
     @staticmethod
@@ -230,8 +235,9 @@ class AlgorithmicMethods:
         AlgorithmicMethods.__normalize_body_1.launch_n(prob.shape[0], [prob.data, cell_id.data, norm_factor.data])
 
     __remove_zeros_body = trtc.For(['data', 'idx', 'idx_length'], "i", '''
-        if (idx[i] < idx_length && data[idx[i]] == 0)
+        if (idx[i] < idx_length && data[idx[i]] == 0) {
             idx[i] = idx_length;
+        }
         ''')
 
     @staticmethod
@@ -255,7 +261,7 @@ class AlgorithmicMethods:
             int cell_id_curr = cell_id[idx[i]];
             int cell_id_next = cell_id[idx[i + 1]];
             int diff = (cell_id_next - cell_id_curr);
-            for (int j = 1; j <= diff; j++) {
+            for (int j = 1; j < diff + 1; j += 1) {
                 cell_start[cell_id_curr + j] = idx[i + 1];
             }
         }
@@ -264,7 +270,8 @@ class AlgorithmicMethods:
     @staticmethod
     @nice_thrust(**NICE_THRUST_FLAGS)
     def _sort_by_cell_id_and_update_cell_start(cell_id, cell_start, idx, length):
-        trtc.Sort_By_Key(cell_id.data, idx.data)
+        # TODO !!!
+        assert max(cell_id.to_ndarray()) == 0
         trtc.Fill(cell_start.data, trtc.DVInt64(length))
         AlgorithmicMethods.___sort_by_cell_id_and_update_cell_start_body.launch_n(length - 1,
                                                                                   [cell_id.data, cell_start.data, idx.data])

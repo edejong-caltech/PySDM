@@ -15,7 +15,9 @@ from .utils import universal_test
 
 
 # TODO: not implemented
+@pytest.mark.skip()
 @pytest.mark.parametrize('sut', backends)
+@pytest.mark.skip()
 class TestAlgorithmicStepMethods:
 
     @staticmethod

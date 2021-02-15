@@ -1,18 +1,18 @@
 """
-Created at 27.08.2020 by claresinger
+Created at 21.01.2021
 """
 
-from PySDM.physics import constants as const
-
 class Linear:
-    def __init__(self, a):
+
+    def __init__(self, a, b):
         self.a = a
-        
+        self.b = b
+        self.core = None
+
     def __call__(self, output, is_first_in_pair):
-        #pair in order (R, r) to temporary memory self.tmp
-        self.tmp.sort_pair(self.core.state['radius'], is_first_in_pair) #pair in order (R, r) to temporary memory self.tmp: see gravitational.py
-        # f(R,r) = R+r, for R>=r
-        output.polynomial_pair(self.tmp, is_first_in_pair, coef_0=(1,), coef_1=(1,), pow_0=(1), pow_1=(1))
+        output.sum_pair(self.core.particles['volume'], is_first_in_pair)
+        output *= self.b
+        output += self.a
 
     def register(self, builder):
         self.core = builder.core

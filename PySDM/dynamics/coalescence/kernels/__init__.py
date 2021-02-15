@@ -8,3 +8,4 @@ from .hydrodynamic import Hydrodynamic
 from .electric import Electric
 from .constkern import ConstKern
 from .linear import Linear
+from .specified_eff import SpecifiedEff

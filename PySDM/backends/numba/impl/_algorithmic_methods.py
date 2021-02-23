@@ -146,6 +146,25 @@ class AlgorithmicMethods:
     def linear_collection_efficiency(params, output, radii, is_first_in_pair, unit):
         return AlgorithmicMethods.linear_collection_efficiency_body(
             params, output.data, radii.data, is_first_in_pair.data, len(is_first_in_pair), unit)
+    
+    
+    @staticmethod
+    @numba.njit(**conf.JIT_FLAGS)
+    def polynomial_kernel_body(params, output, volume, is_first_in_pair, length):
+        A, B, C = params
+        for i in prange(length-1):
+            output[i] = 0
+            if is_first_in_pair[i]:
+                v1 = volume[i]
+                v2 = volume[i+1]
+                output[i] = A + B*(v1 + v2) + C*v1*v2
+        
+    
+    @staticmethod
+    def polynomial_kernel(params, output, volume, is_first_in_pair):
+        return AlgorithmicMethods.polynomial_kernel_body(
+            params, output.data, volume.data, is_first_in_pair.data, len(is_first_in_pair))
+        
 
     @staticmethod
     @numba.njit(**conf.JIT_FLAGS)

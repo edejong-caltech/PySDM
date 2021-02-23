@@ -92,3 +92,14 @@ class AlgorithmicStepMethods:
     @staticmethod
     def sum_pair(data_out, data_in, is_first_in_pair, idx, length):
         return AlgorithmicStepMethods.sum_pair_body(data_out.data, data_in.data, is_first_in_pair.data, idx.data, length)
+    
+    @staticmethod
+    @numba.njit(void(float64[:], float64[:], int64[:], int64[:], int64), **conf.JIT_FLAGS)
+    def multiply_pair_body(data_out, data_in, is_first_in_pair, idx, length):
+        # note: silently assumes that data_out is not permuted (i.e. not part of state)
+        for i in prange(length - 1):
+            data_out[i] = (data_in[idx[i]] * data_in[idx[i + 1]]) if is_first_in_pair[i] else 0
+
+    @staticmethod
+    def mulitply_pair(data_out, data_in, is_first_in_pair, idx, length):
+        return AlgorithmicStepMethods.multiply_pair_body(data_out.data, data_in.data, is_first_in_pair.data, idx.data, length)

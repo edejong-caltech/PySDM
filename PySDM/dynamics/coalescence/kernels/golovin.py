@@ -8,8 +8,10 @@ from scipy import special
 
 class Golovin:
 
-    def __init__(self, b):
+    def __init__(self, a, b, c):
+        self.a = a
         self.b = b
+        self.c = c
         self.core = None
 
     def __call__(self, output, is_first_in_pair):

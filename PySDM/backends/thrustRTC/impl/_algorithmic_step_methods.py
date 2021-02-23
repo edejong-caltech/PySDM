@@ -131,3 +131,18 @@ class AlgorithmicStepMethods:
         # note: silently assumes that data_out is not permuted (i.e. not part of state)
         perm_in = trtc.DVPermutation(data_in, idx)
         AlgorithmicStepMethods.__sum_pair_body.launch_n(length, [data_out, perm_in, is_first_in_pair])
+        
+    
+    __multiply_pair_body = trtc.For(['data_out', 'perm_in', 'is_first_in_pair'], "i", '''
+        if (is_first_in_pair[i]) {
+            data_out[i] = perm_in[i] * perm_in[i + 1];
+        } 
+        else {
+            data_out[i] = 0;
+        }
+        ''')
+    
+    def multiply_pair(data_out, data_in, is_first_in_pair, idx, length):
+        # note: silently assumes that data_out is not permuted (i.e. not part of state)
+        perm_in = trtc.DVPermutation(data_in, idx)
+        AlgorithmicStepMethods.__multiply_pair_body.launch_n(length, [data_out, perm_in, is_first_in_pair])

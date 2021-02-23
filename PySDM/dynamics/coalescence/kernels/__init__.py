@@ -9,3 +9,5 @@ from .electric import Electric
 from .constkern import ConstKern
 from .linear import Linear
 from .specified_eff import SpecifiedEff
+from .product import Product
+from .polynomial import Polynomial

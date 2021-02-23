@@ -59,6 +59,10 @@ class IndexedStorage(Storage):
     def sum_pair(self, other, is_first_in_pair):
         AlgorithmicStepMethods.sum_pair_body(self.data, other.data, is_first_in_pair.data, other.idx.data, len(other))
         self.idx = None
+        
+    def multiply_pair(self, other, is_first_in_pair):
+        AlgorithmicStepMethods.multiply_pair_body(self.data, other.data, is_first_in_pair.data, other.idx.data, len(other))
+        self.idx = None
 
     def to_ndarray(self):
         return self.data[:self.length].copy()

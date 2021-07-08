@@ -1,5 +1,5 @@
 ThrustRTC==0.3.8
-CURandRTC==0.1.6
+CURandRTC==0.1.7
 numba==0.51.2
 git+git://github.com/atmos-cloud-sim-uj/PyMPDATA@f33d602#egg=PyMPDATA
 
